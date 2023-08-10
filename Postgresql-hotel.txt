@@ -1,0 +1,74 @@
+CREATE TABLESPACE hotelspace LOCATION 'D:\';
+
+CREATE DATABASE hotel TABLESPACE hotelspace;
+
+ CREATE SCHEMA pupil;
+ CREATE SCHEMA other;
+
+CREATE DOMAIN pasport_domain AS int NOT NULL;
+CREATE DOMAIN bron_date AS date NOT NULL CHECK(VALUE>=current_date);
+
+hotel=# CREATE TABLE pupil.client(
+hotel(# id_client serial PRIMARY KEY,
+hotel(# Name varchar(20) NOT NULL,
+hotel(# Surname varchar(20) NOT NULL,
+hotel(# Patronymic varchar(20),
+hotel(# Passport pasport_domain,
+hotel(# Comment varchar(50) NOT NULL,
+hotel(# CONSTRAINT UNIQUE_client_Passport UNIQUE(Passport));
+
+INSERT INTO pupil.client VALUES
+(1, 'Эмиль','Суворов','Иванович', 1232123321,'Раздельные кровати');
+hotel-# (2, 'Иван','Борисов','Богданович', 1232143321,'Двухместный номер'),
+hotel-# (3, 'Глеб','Сабуров','Эмильевич', 1132143321,'Доставка еды');
+
+
+hotel=# CREATE TABLE other.numbers (
+hotel(# id_number serial PRIMARY KEY,
+hotel(# Room_number int NOT NULL,
+hotel(# Quantity_people int NOT NULL,
+hotel(# Komfort varchar(20) NOT NULL,
+hotel(# Price int NOT NULL,
+hotel(# CONSTRAINT UNIQUE_numbers_Room_Namber UNIQUE(Room_number),
+hotel(# CONSTRAINT Number_komfort CHECK( Komfort='Люкс' OR Komfort='Комфорт' OR Komfort='Стандарт'));
+
+INSERT INTO other.numbers VALUES
+hotel-# (1, 10, 1,'Стандарт', 2000);
+hotel=#(2, 20, 2,'Комфорт', 3000);
+hotel-# (3, 40, 4,'Люкс', 4000);
+
+
+CREATE TABLE other.poselenie(
+hotel(# id_poselene serial PRIMARY KEY,
+hotel(# id_client int NOT NULL,
+hotel(# id_namber int NOT NULL,
+hotel(# data_poselenie date NOT NULL,
+hotel(# data_osvob date NOT NULL,
+hotel(# Comment varchar(50),
+hotel(# CONSTRAINT FK_id_client FOREIGN KEY(id_client) REFERENCES pupil.client (id_client) ON DELETE NO ACTION ON UPDATE CASCADE,
+hotel(# CONSTRAINT FK_id_namber FOREIGN KEY(id_namber) REFERENCES other.numbers (id_number) ON DELETE NO ACTION ON UPDATE CASCADE,
+hotel(# CONSTRAINT data_osvob_cons CHECK( data_osvob>current_date));
+
+ALTER TABLE other.poselenie DROP CONSTRAINT data_osvob_cons;
+ALTER TABLE other.poselenie ADD CONSTRAINT data_constr CHECK (data_osvob>data_poselenie);
+
+INSERT INTO other.poselenie VALUES
+hotel-# (1, 1, 1, '2023-04-12'::date, '2023-04-15'::date, 'должен чаевые');
+(2,2,2,'2023-04-12'::date, '2023-04-15'::date, 'должен чаевые');
+(3,3,3,'2023-05-19'::date, '2023-06-01'::date, 'должен чаевые');
+
+
+CREATE TABLE other.bron(
+hotel(# id_bron serial PRIMARY KEY,
+hotel(# id_client int NOT NULL,
+hotel(# id_number int NOT NULL,
+hotel(# data_poselenie date NOT NULL,
+hotel(#  data_osvob date NOT NULL,
+hotel(# CONSTRAINT FK_id_client FOREIGN KEY(id_client) REFERENCES pupil.client (id_client) ON DELETE NO ACTION ON UPDATE CASCADE,
+hotel(# CONSTRAINT FK_id_number FOREIGN KEY(id_number) REFERENCES other.numbers (id_number) ON DELETE NO ACTION ON UPDATE CASCADE,
+hotel(# CONSTRAINT data_constr CHECK (data_osvob>data_poselenie));
+
+hotel=# CREATE TABLE other.sale(
+hotel(# id_sale serial PRIMARY KEY,
+hotel(# Kategor varchar(20) NOT NULL,
+hotel(# Sale int NOT NULL);

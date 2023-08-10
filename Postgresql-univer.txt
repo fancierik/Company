@@ -1,0 +1,169 @@
+1. CREATE  TABLESPACE yniver_tbsp  LOCATION 'D:\yniver';
+
+2.CREATE DATABASE univer TABLESPACE yniver_tbsp;
+ \c univer
+
+3. CREATE SCHEMA prepodovatel;
+
+ SET search_path=prepodovatel;
+
+4. CREATE DOMAIN quant_vr AS int CHECK(  VALUE>0);
+CREATE DOMAIN
+
+5. CREATE TABLE prepodavatel(
+id_prepodavatel serial PRIMARY KEY,
+ Name_Patronumic varchar(20) NOT NULL,
+Surname varchar(20) NOT NULL,
+Quantity quant_vr,
+ Id_prednmet int,
+CONSTRAINT FK_Id_prednmet FOREIGN KEY( Id_prednmet) REFERENCES  predmet(id_predmet) ON DELETE NO ACTION ON UPDATE CASCADE);
+
+
+CREATE TABLE predmet(
+univer(# id_predmet serial PRIMARY KEY,
+univer(# Name varchar(50) NOT NULL,
+univer(# id_prepodavatel int NOT NULL,
+univer(# CONSTRAINT FK_id_prepodavatel FOREIGN KEY(id_prepodavatel) REFERENCES prepodavatel(id_prepodavatel) ON DELETE NO ACTION ON UPDATE CASCADE);
+
+
+univer=# ALTER TABLE predmet DROP COLUMN id_prepodavatel;
+ALTER TABLE
+
+univer=# ALTER TABLE predmet ADD COLUMN vid varchar(20);
+ALTER TABLE
+univer=# ALTER TABLE predmet ADD CONSTRAINT vid_constraint CHECK (vid~'Практика|Лекция');
+univer=# UPDATE predmet SET vid ='Практика' WHERE id_predmet=1;
+UPDATE 1
+univer=# UPDATE predmet SET vid ='Практика' WHERE id_predmet=2;
+UPDATE 1
+univer=# UPDATE predmet SET vid ='Практика' WHERE id_predmet=3;
+UPDATE 1
+
+univer=# INSERT INTO predmet VALUES
+univer-# (4, 'УД', 'Лекция');
+INSERT 0 1
+univer=# INSERT INTO predmet VALUES
+univer-# (5, 'МР', 'Лекция'),
+univer-# (6, 'Веб', 'Лекция');
+INSERT 0 2
+
+univer=# SELECT * FROM predmet;
+ id_predmet | name |   vid
+------------+------+----------
+          1 | УД   | Практика
+          2 | МР   | Практика
+          3 | Веб  | Практика
+          4 | УД   | Лекция
+          5 | МР   | Лекция
+          6 | Веб  | Лекция
+(6 строк)
+
+univer=#  CREATE TABLE prepodavatel(
+univer(# id_prepodavatel serial PRIMARY KEY,
+univer(# Name_Patronumic varchar(20) NOT NULL,
+univer(# Surname varchar(20) NOT NULL,
+univer(# Quantity quant_vr,
+univer(# Id_prednmet int,
+univer(# CONSTRAINT FK_Id_prednmet FOREIGN KEY( Id_prednmet) REFERENCES  predmet(id_predmet) ON DELETE NO ACTION ON UPDATE CASCADE);
+CREATE TABLE
+
+univer=# INSERT INTO prepodavatel  VALUES
+univer-# (1, 'В.К.','Злобин',24, 1);
+INSERT INTO prepodavatel  VALUES
+univer-# (2, 'Ф.К.','Сабуров',24, 1);
+univer=# SELECT * FROM prepodavatel;
+ id_prepodavatel | name_patronumic | surname | quantity | id_prednmet
+-----------------+-----------------+---------+----------+-------------
+               1 | В.К.            | Злобин  |       24 |           1
+               2 | Ф.К.            | Сабуров |       24 |           1
+(2 строки)
+univer=# ALTER TABLE predmet ADD COLUMN id_prepod int;
+ALTER TABLE
+univer=# ALTER TABLE predmet ADD CONSTRAINT FK_id_prepodovatel FOREIGN KEY(id_prepod) REFERENCES prepodavatel ( id_prepodavatel) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE
+
+
+univer=# UPDATE predmet SET id_prepod=1 WHERE id_predmet=1;
+UPDATE 1
+univer=# UPDATE predmet SET id_prepod=1 WHERE id_predmet=3;
+UPDATE 1
+univer=# UPDATE predmet SET id_prepod=1 WHERE id_predmet=5;
+UPDATE 1
+univer=# UPDATE predmet SET id_prepod=2 WHERE id_predmet=2;
+UPDATE 1
+univer=# UPDATE predmet SET id_prepod=2 WHERE id_predmet=4;
+UPDATE 1
+univer=# UPDATE predmet SET id_prepod=2 WHERE id_predmet=6;
+UPDATE 1
+
+6. 
+CREATE ROLE administratoruniver WITH PASSWORD 'admin' LOGIN SUPERUSER CREATEROLE NOCREATEDB NOREPLICATION;
+GRANT ALL ON SCHEMA public TO administratoruniver;
+CREATE ROLE sotrudnik WITH PASSWORD 'work' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE REPLICATION;
+GRANT usage ON SCHEMA public TO sotrudnik;
+
+
+
+7 .CREATE TABLE vrem_proced_tb AS TABLE predmet;
+ALTER TABLE vrem_proced_tb ADD COLUMN count_vr numeric;
+
+
+CREATE OR REPLACE PROCEDURE vrem_proced(id_prepodd int)
+ LANGUAGE plpgsql
+ AS $$
+ BEGIN
+ UPDATE vrem_proced_tb SET count_vr=(SELECT count(*) FROM vrem_proced_tb WHERE id_prepod=id_prepodd)*1.5 WHERE id_prepod=id_prepodd;
+ COMMIT;
+ END;
+$$;
+CREATE PROCEDURE
+
+
+8. CALL vrem_proced(1);
+univer=# select * from vrem_proced_tb order by  id_predmet;
+ id_predmet | name |   vid    | id_prepod | count_vr
+------------+------+----------+-----------+----------
+          1 | УД   | Практика |         1 |      4.5
+          2 | МР   | Практика |         2 |
+          3 | Веб  | Практика |         1 |      4.5
+          4 | УД   | Лекция   |         2 |
+          5 | МР   | Лекция   |         1 |      4.5
+          6 | Веб  | Лекция   |         2 |
+(6 строк)
+
+9.  
+CREATE or replace FUNCTION trg_insert_failed_push() RETURNS trigger 
+AS
+$$
+BEGIN
+IF EXISTS (
+SELECT name , vid , id_prepod FROM predmet
+where  name= NEW.name AND vid =NEW.vid AND  id_prepod= NEW.id_prepod )
+THEN RAISE EXCEPTION 'Такое значение уже сущетсувует';
+RETURN NULL; 
+ELSE RETURN NEW;
+END IF;
+END
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER check_insertion__table
+BEFORE INSERT ON predmet
+FOR EACH ROW EXECUTE PROCEDURE trg_insert_failed();
+
+INSERT INTO predmet VALUES (7, 'УД','Практика',1);
+INSERT INTO predmet VALUES (8, 'Разработка','Практика',1);
+
+
+11. CREATE INDEX prepodavatel_ind ON prepodavatel(name_patronumic, surname ) INCLUDE kafedra;
+
+
+CREATE or replace FUNCTION trg_insert_failed() RETURNS trigger 
+AS
+$$
+BEGIN
+IF   (new.name!= old.name AND new.vid!=old.vid AND  new.id_prepod!=old.id_prepod ) then RETURN NEW;
+ELSE  RAISE EXCEPTION 'Такое значение уже сущетсувует';
+END IF;
+END
+$$ LANGUAGE plpgsql;

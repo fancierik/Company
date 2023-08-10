@@ -1,0 +1,208 @@
+CREATE TABLESPACE kompany LOCATION 'D:\salbd';
+CREATE DATABASE company TABLESPACE kompany;
+
+CREATE SCHEMA pupil;
+CREATE SCHEMA other;
+
+
+CREATE DOMAIN date_domain AS date NOT NULL CHECK (VALUE>=current_date);
+CREATE DOMAIN fio_domain AS varchar(50) NOT NULL;
+
+КЛИЕНТ
+CREATE TABLE pupil.client (                             
+id_client serial PRIMARY KEY,
+Surname fio_domain,
+Name fio_domain,
+Patronymic varchar(50),
+Adress fio_domain,
+Telefon varchar(12) NOT NULL,
+CONSTRAINT UNIQUE_client_Telefon UNIQUE (Telefon),
+CONSTRAINT client_Telefon CHECK (Telefon SIMILAR TO '+7 [0-9][0-9][0-9] [0-9][0-9][0-9] [0-9][0-9] [0-9][0-9]'));
+
+ALTER TABLE pupil.client DROP CONSTRAINT client_Telefon;
+ALTER TABLE pupil.client ADD CONSTRAINT client_Telefon CHECK (Telefon SIMILAR TO '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]');
+
+INSERT INTO pupil.client VALUES
+(1, 'Киселева', 'Дарья', 'Андреевна', 'г.Серебряные Пруды, пл. Ладыгина, 65', '89120228404'),
+(2, 'Фокин', 'Андрей', 'Львович', 'г. Люберцы, пер. Чехова, 98', '89122305944'),
+(3, 'Иванов', 'Евгений', 'Андреевич', 'г. Озёры, спуск Бухарестская, 55', '89123248070'),
+(4, 'Щербакова', 'Таисия', 'Артёмовна',  'г. Шатура, въезд Ладыгина, 71', '89122521413'),
+(5, 'Зуев', 'Дмитрий', 'Тимурович', 'г.Люберцы, пр. Чехова, 91', '89123528574');
+
+SELECT * FROM pupil.client;
+
+
+
+ АГЕНТ
+CREATE TABLE pupil.agent (                          
+id_agent serial PRIMARY KEY,
+Surname fio_domain,
+Name fio_domain,
+Patronymic varchar(50),
+Adress fio_domain,
+Telefon varchar(12) NOT NULL,
+CONSTRAINT UNIQUE_agent_Telefon UNIQUE (Telefon),
+CONSTRAINT agent_Telefon CHECK (Telefon SIMILAR TO '+7 [0-9][0-9][0-9] [0-9][0-9][0-9] [0-9][0-9] [0-9][0-9]'));
+
+ALTER TABLE pupil.agent DROP CONSTRAINT agent_Telefon;
+ALTER TABLE pupil.agent ADD CONSTRAINT agent_Telefon CHECK (Telefon SIMILAR TO '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]');
+ALTER TABLE pupil.agent ADD Salary numeric;
+
+INSERT INTO pupil.agent VALUES
+(1, 'Виноградова', 'Стефания', 'Александровна', 'г. Егорьевск, бульвар Славы, 09','89136314561'),
+(2, 'Кочеткова', 'Ольга', 'Данииловна', 'г. Орехово-Зуево, спуск Ленина, 86','89136715831'),
+(3, 'Ефимов', 'Александр', 'Денисович', 'г. Шатура, въезд Ладыгина, 71','89139661344');
+
+ SELECT * FROM pupil.agent;
+
+
+ФИЛИАЛ
+CREATE TABLE other.branch (                          
+id_branch serial PRIMARY KEY,
+Appellation fio_domain,
+Adress fio_domain,
+Telefon varchar(12) NOT NULL,
+CONSTRAINT UNIQUE_agent_Telefon UNIQUE (Telefon),
+CONSTRAINT agent_Telefon CHECK (Telefon SIMILAR TO '+7 [0-9][0-9][0-9] [0-9][0-9][0-9] [0-9][0-9] [0-9][0-9]'));
+
+ALTER TABLE other.branch DROP CONSTRAINT agent_Telefon;
+ALTER TABLE other.branch DROP CONSTRAINT UNIQUE_agent_Telefon;
+ALTER TABLE other.branch ADD CONSTRAINT branch_Telefon CHECK (Telefon SIMILAR TO '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]');
+ALTER TABLE other.branch ADD CONSTRAINT UNIQUE_branch_Telefon UNIQUE(Telefon);
+
+INSERT INTO other.branch VALUES
+(1,'Северный', 'г.Красногорск, ул.Славы, 91','89122172964'),
+(2,'Южный', 'г.Клин, ул.1905г,6','89122938677'),
+(3,'Восточный', 'г.Озеры, ул.Ломоносова,72','89170411763');
+
+select * from other.branch;
+
+
+
+ВИД СТРАХОВАНИЯ
+CREATE TABLE other.insurance (                      
+id_insurance serial PRIMARY KEY,
+Appellation fio_domain,
+Percent numeric NOT NULL);
+
+INSERT INTO other.insurance VALUES
+(68, 'Имущественное страхование', 0.02),
+(29, 'Автотраспортное страхование', 0.02),
+(97, 'Страхование домашнего имущества', 0.01),
+(21, 'Медецинское страхование', 0.02);
+
+SELECT * FROM other.insurance;
+
+
+
+ДОГОВОР
+CREATE TABLE other.contract (                            
+id_conract serial PRIMARY KEY,
+data_contract date_domain,
+insurance_amount numeric NOT NULL,
+Tariff_rate numeric NOT NULL,
+id_branch smallint NOT NULL,
+id_insurance smallint NOT NULL,
+CONSTRAINT FK_id_branch FOREIGN KEY (id_branch) REFERENCES other.branch (id_branch) ON DELETE NO ACTION ON UPDATE CASCADE,
+CONSTRAINT FK_id_insurance FOREIGN KEY (id_insurance) REFERENCES other.insurance (id_insurance) ON DELETE NO ACTION ON UPDATE CASCADE);
+
+INSERT INTO other.contract VALUES
+(1, '2023-03-07'::date, 50000, 500, 1, 68),
+(2, '2023-03-07'::date, 40000, 400, 2, 29),
+(3, '2023-03-07'::date, 30000, 300, 3, 97);
+
+ALTER TABLE other.contract RENAME COLUMN id_conract TO id_contract;
+ALTER TABLE other.contract ADD COLUMN id_client int;
+ALTER TABLE other.contract ADD CONSTRAINT FK_id_client FOREIGN KEY (id_client) REFERENCES pupil.client (id_client) ON DELETE NO ACTION ON UPDATE CASCADE;
+UPDATE other.contract SET id_client=2 WHERE id_contract=1;
+UPDATE other.contract SET id_client=5 WHERE id_contract=2;
+UPDATE other.contract SET id_client=3 WHERE id_contract=3;
+UPDATE other.contract SET id_client=1 WHERE id_contract=4;
+ALTER TABLE other.contract ADD COLUMN id_agent int;
+ALTER TABLE other.contract ADD CONSTRAINT FK_id_agent FOREIGN KEY (id_agent) REFERENCES pupil.agent (id_agent) ON DELETE NO ACTION ON UPDATE CASCADE;
+UPDATE other.contract SET id_agent=1 WHERE id_contract=1;
+UPDATE other.contract SET id_agent=3 WHERE id_contract=2;
+UPDATE other.contract SET id_agent=3 WHERE id_contract=3;
+UPDATE other.contract SET id_agent=2 WHERE id_contract=4;
+
+SELECT * FROM other.contract;
+
+
+
+ПРОЦЕДУРА
+CREATE TABLE other.rtt AS TABLE other.contract;
+ALTER TABLE other.rtt ADD COLUMN Salary numeric;
+UPDATE other.rtt SET Percent=0.02 WHERE id_insurance=68;
+UPDATE other.rtt SET Percent=0.02 WHERE id_insurance=29;
+UPDATE other.rtt SET Percent=0.01 WHERE id_insurance=97;
+
+CREATE OR REPLACE PROCEDURE salarupr(idagent int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+UPDATE other.rtt
+SET Salary = insurance_amount * tariff_rate * percent
+WHERE id_agent = idagent;
+COMMIT;
+END;
+$$;
+CALL salarupr(1);
+CALL salarupr(2);
+CALL salarupr(3);
+ SELECT * FROM other.rtt;
+
+
+
+
+РОЛИ
+CREATE ROLE administrator WITH PASSWORD 'admin' LOGIN SUPERUSER CREATEROLE NOCREATEDB NOREPLICATION;    --АДМИНИСТРАТОР
+CREATE ROLE worker WITH PASSWORD 'work' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE REPLICATION;           -- РАБОЧИЙ
+GRANT ALL ON SCHEMA public TO admin;
+GRANT usage ON SCHEMA public TO worker;
+
+
+
+ТРИГГЕР
+CREATE OR REPLACE FUNCTION date_fun()
+RETURNS trigger
+AS $$
+BEGIN
+IF ((current_date-integer '3')<old.data_contract) THEN RETURN NEW;
+ELSE RAISE EXCEPTION 'Изменения запрещены';
+END IF;
+END;
+ $$ LANGUAGE plpgsql;
+CREATE TRIGGER date_tr BEFORE UPDATE ON other.contract FOR EACH ROW EXECUTE FUNCTION date_fun();
+UPDATE other.contract SET id_branch=2 WHERE id_contract=3;
+
+
+\dn - список схем
+\dt other.* - список таблиц в схеме other
+\du -  список ролей
+
+
+ПРЕДСТАВЛЕНИЯ
+CREATE VIEW newview AS SELECT a.Surname AS Surname_Client, a.Name AS Name_Client, a.Patronymic AS Patronymic_Client, b.id_contract, b.id_agent FROM pupil.client AS a LEFT JOIN other.contract AS b ON a.id_client=b.id_client;
+
+SELECT * FROM newview;
+
+
+ИНДЕКС 
+CREATE INDEX company_index ON other.contract(id_contract) INCLUDE(data_contract, id_client) WHERE(id_client=1);
+
+
+CREATE OR REPLACE PROCEDURE salepr(idclientpr int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+UPDATE saletb
+SET price=price-(price*0.03) WHERE quantity>=5 AND idclient=idclientpr;
+COMMIT;
+END;
+$$;
+
+
+
+
+11.CREATE INDEX prepodavatel_ind ON prepodavatel(kafedra) WHERE  (name_patronumic='В.К.'AND surname='Злобин');
+CREATE INDEX
